@@ -1,0 +1,424 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="add-progress-container">
+    <div class="form-wrapper">
+        <!-- Header -->
+        <div class="form-header">
+            <a href="{{ url_for('progress_logs') }}" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h1 class="form-title">Add Progress Log</h1>
+                <p class="form-subtitle">Record your weight and body composition</p>
+            </div>
+        </div>
+
+        <!-- Current Stats Info (if available) -->
+        {% if latest_progress %}
+        <div class="current-stats">
+            <div class="stats-header">
+                <i class="fas fa-info-circle"></i>
+                <span>Your Latest Stats ({{ latest_progress.date.strftime('%b %d, %Y') }})</span>
+            </div>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-label">Weight</span>
+                    <span class="stat-value">{{ "%.1f"|format(latest_progress.weight) }} kg</span>
+                </div>
+                {% if latest_progress.body_fat_percentage %}
+                <div class="stat-item">
+                    <span class="stat-label">Body Fat</span>
+                    <span class="stat-value">{{ "%.1f"|format(latest_progress.body_fat_percentage) }}%</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Form -->
+        <form method="POST" action="{{ url_for('add_progress_log') }}" class="progress-form" id="progressForm">
+            <!-- Date Field -->
+            <div class="form-group">
+                <label for="date" class="form-label">
+                    <i class="fas fa-calendar"></i>
+                    Date <span class="required">*</span>
+                </label>
+                <input type="date" id="date" name="date" class="form-control" value="{{ today }}" max="{{ today }}"
+                    required>
+                <small class="form-hint">Select the date for this log entry</small>
+            </div>
+
+            <!-- Weight Field -->
+            <div class="form-group">
+                <label for="weight" class="form-label">
+                    <i class="fas fa-weight"></i>
+                    Weight (kg) <span class="required">*</span>
+                </label>
+                <input type="number" id="weight" name="weight" class="form-control" step="0.1" min="20" max="300"
+                    placeholder="e.g., 75.5" required>
+                <small class="form-hint">Enter your weight in kilograms</small>
+            </div>
+
+            <!-- Body Fat Percentage Field -->
+            <div class="form-group">
+                <label for="body_fat_percentage" class="form-label">
+                    <i class="fas fa-chart-pie"></i>
+                    Body Fat Percentage (%)
+                </label>
+                <input type="number" id="body_fat_percentage" name="body_fat_percentage" class="form-control" step="0.1"
+                    min="3" max="60" placeholder="e.g., 18.5">
+                <small class="form-hint">Optional: Enter your body fat percentage if measured</small>
+            </div>
+
+            <!-- Notes Field -->
+            <div class="form-group">
+                <label for="notes" class="form-label">
+                    <i class="fas fa-sticky-note"></i>
+                    Notes
+                </label>
+                <textarea id="notes" name="notes" class="form-control" rows="4"
+                    placeholder="Add any notes about your progress, how you're feeling, diet changes, etc..."></textarea>
+                <small class="form-hint">Optional: Add notes about your progress or changes</small>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <a href="{{ url_for('progress_logs') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Progress Log
+                </button>
+            </div>
+        </form>
+
+        <!-- Tips Section -->
+        <div class="tips-section">
+            <h3 class="tips-title">
+                <i class="fas fa-lightbulb"></i> Tips for Tracking Progress
+            </h3>
+            <ul class="tips-list">
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    Weigh yourself at the same time each day (morning is best)
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    Track consistently - weekly measurements work well
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    Don't focus on daily fluctuations, look at trends over time
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    Body fat percentage is more important than weight alone
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Form validation and enhancement
+    document.getElementById('progressForm').addEventListener('submit', function (e) {
+        const weight = parseFloat(document.getElementById('weight').value);
+        const bodyFat = document.getElementById('body_fat_percentage').value;
+
+        // Validate weight
+        if (weight < 20 || weight > 300) {
+            e.preventDefault();
+            alert('Please enter a realistic weight between 20 and 300 kg');
+            return;
+        }
+
+        // Validate body fat if provided
+        if (bodyFat) {
+            const bf = parseFloat(bodyFat);
+            if (bf < 3 || bf > 60) {
+                e.preventDefault();
+                alert('Please enter a realistic body fat percentage between 3% and 60%');
+                return;
+            }
+        }
+    });
+
+    // Auto-focus first input
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('date').focus();
+    });
+</script>
+
+<style>
+    .add-progress-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .form-wrapper {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    /* Header */
+    .form-header {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .back-btn {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateX(-4px);
+    }
+
+    .form-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .form-subtitle {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    /* Current Stats */
+    .current-stats {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-left: 4px solid #3b82f6;
+        padding: 1.5rem;
+        margin: 1.5rem 1.5rem 0 1.5rem;
+        border-radius: 0.75rem;
+    }
+
+    .stats-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #1e40af;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .stat-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    /* Form */
+    .progress-form {
+        padding: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.75rem;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-label i {
+        color: #6366f1;
+        font-size: 1rem;
+    }
+
+    .required {
+        color: #ef4444;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-control::placeholder {
+        color: #9ca3af;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .form-hint {
+        display: block;
+        margin-top: 0.5rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid #f3f4f6;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-secondary {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .btn-secondary:hover {
+        background: #e5e7eb;
+    }
+
+    /* Tips Section */
+    .tips-section {
+        background: #f9fafb;
+        padding: 2rem;
+        border-top: 2px solid #e5e7eb;
+    }
+
+    .tips-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+
+    .tips-title i {
+        color: #f59e0b;
+    }
+
+    .tips-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .tips-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: white;
+        border-radius: 0.5rem;
+        color: #4b5563;
+        line-height: 1.6;
+    }
+
+    .tips-list i {
+        color: #10b981;
+        margin-top: 0.25rem;
+        flex-shrink: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+        .add-progress-container {
+            padding: 1rem;
+        }
+
+        .form-header {
+            padding: 1.5rem;
+        }
+
+        .progress-form,
+        .tips-section {
+            padding: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
